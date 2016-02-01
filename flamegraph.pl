@@ -659,10 +659,25 @@ my $inc = <<INC;
 		searching = 0;
 	}
 
+	function fit_text_in_element(text, textNode, maxWidth) {
+		// textNode is a Node.TEXT_NODE.  It's parent should be a <text> element (Node.ELEMENT_NODE).
+		textNode.nodeValue = text.substr(0, 2) + '‥';
+		textElement = textNode.parentElement;
+		var infoLength = text.length;
+		while (textNode.nodeValue.length < infoLength && textElement.getSubStringLength(0, infoLength) < maxWidth * 0.9) {
+			textNode.nodeValue = text.substr(0, textNode.nodeValue.length + 1) + '‥';
+		}
+		if (textNode.nodeValue.length >= infoLength) {
+			textNode.nodeValue = text;
+		}
+	}
+
 	// mouse-over for info
 	function s(node) {		// show
-		info = g_to_text(node);
-		details.nodeValue = "$nametype " + info;
+		info = "$nametype " + g_to_text(node);
+		var textElement = details.parentElement;
+		var maxWidth = textElement.parentElement.getBBox().width - textElement.getBBox().x;
+		fit_text_in_element(info, details, maxWidth);
 	}
 	function c() {			// clear
 		details.nodeValue = ' ';
@@ -718,19 +733,9 @@ my $inc = <<INC;
 			t.textContent = "";
 			return;
 		}
-		
-		t.textContent = txt;
-		// Fit in full text width
-		if (/^ *\$/.test(txt) || t.getSubStringLength(0, txt.length) < w)
-			return;
-		
-		for (var x=txt.length-2; x>0; x--) {
-			if (t.getSubStringLength(0, x+2) <= w) { 
-				t.textContent = txt.substring(0,x) + "..";
-				return;
-			}
-		}
-		t.textContent = "";
+
+		t.textContent = " ";
+		fit_text_in_element(txt, t.firstChild, w);
 	}
 
 	// zoom
